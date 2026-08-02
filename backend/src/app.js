@@ -182,8 +182,12 @@ function testTcp(host, port, ms = 8000) {
 }
 app.get('/api/diag', async (req, res) => {
   const result = { transporter: !!transporter, tcp: {}, smtp: null, send: null };
-  // Test TCP vers plusieurs hôtes/ports Gmail
-  for (const [host, port] of [['smtp.gmail.com', 587], ['smtp.gmail.com', 465], ['smtp.gmail.com', 25], ['smtp.googlemail.com', 587]]) {
+  // Test TCP : Gmail SMTP + hôtes témoins (pour distinguer blocage Gmail vs sortant global)
+  const hosts = [
+    ['smtp.gmail.com', 587], ['smtp.gmail.com', 465], ['smtp.gmail.com', 25], ['smtp.googlemail.com', 587],
+    ['google.com', 443], ['example.com', 80], ['smtp-relay.brevo.com', 587], ['smtp.sendgrid.net', 587],
+  ];
+  for (const [host, port] of hosts) {
     result.tcp[`${host}:${port}`] = await testTcp(host, port);
   }
   if (!transporter) return res.json(result);
