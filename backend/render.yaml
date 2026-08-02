@@ -8,14 +8,13 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: SMTP_HOST
-        value: smtp.gmail.com
-      - key: SMTP_PORT
-        value: '587'
-      - key: SMTP_USER
-        value: chabidaniel093@gmail.com
-      - key: SMTP_PASS
+      # Envoi d'emails via l'API HTTP Brevo (port 443) — le SMTP sortant est bloqué sur Render free.
+      - key: BREVO_API_KEY
         sync: false
+      - key: BREVO_SENDER_EMAIL
+        value: chabidaniel093@gmail.com
+      - key: BREVO_SENDER_NAME
+        value: DocuFlow AFGC
       - key: MAIL_TO
         value: chabidaniel093@gmail.com
       - key: DATA_DIR

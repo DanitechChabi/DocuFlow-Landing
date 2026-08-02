@@ -5,7 +5,6 @@
  */
 const express = require('express');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
 const ExcelJS = require('exceljs');
 const path = require('path');
 const fs = require('fs');
@@ -15,27 +14,35 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- Config email ---
-const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
-const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
-const SMTP_USER = process.env.SMTP_USER || 'chabidaniel093@gmail.com';
-const SMTP_PASS = process.env.SMTP_PASS || '';
+// --- Config email (Brevo — API HTTP port 443, compatible Render free) ---
+// NB : Render free bloque le port SMTP sortant (587/465/25) → un transporter SMTP
+// classique timeout depuis le datacenter. L'API HTTP Brevo passe par le port 443 ✅.
+const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
+const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || 'chabidaniel093@gmail.com';
+const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || 'DocuFlow AFGC';
 const MAIL_TO = process.env.MAIL_TO || 'chabidaniel093@gmail.com';
 
-const transporter = SMTP_PASS
-  ? nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: false,
-      requireTLS: true,
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 20000,
-      // Force IPv4 : Render free ne route pas l'IPv6 (ENETUNREACH sur smtp.gmail.com)
-      connectionOptions: { family: 4 },
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
-    })
-  : null;
+const emailConfigured = !!BREVO_API_KEY;
+
+/**
+ * Envoie un email transactionnel via l'API HTTP Brevo.
+ * @param {object} opts - { to, subject, html, fromEmail?, fromName? }
+ */
+async function sendEmail({ to, subject, html, fromEmail = BREVO_SENDER_EMAIL, fromName = BREVO_SENDER_NAME }) {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'api-key': BREVO_API_KEY },
+    body: JSON.stringify({
+      sender: { email: fromEmail, name: fromName },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  });
+  const body = await res.text();
+  if (!res.ok) throw new Error(`Brevo ${res.status}: ${body}`);
+  return JSON.parse(body);
+}
 
 // --- Config Excel ---
 // Sur Render, DATA_DIR pointe vers le disque persistant (render.yaml → /var/data).
@@ -170,46 +177,30 @@ function buildEmailHtml(data) {
 // --- Routes ---
 app.get('/', (req, res) => res.json({ status: 'ok', message: 'DocuFlow Landing API' }));
 
-// --- Diagnostic SMTP (temporaire, pour le débogage du déploiement) ---
-const net = require('net');
-function testTcp(host, port, ms = 8000) {
-  return new Promise((resolve) => {
-    const s = net.connect({ host, port, family: 4 });
-    const t = setTimeout(() => { s.destroy(); resolve({ ok: false, error: 'timeout' }); }, ms);
-    s.on('connect', () => { clearTimeout(t); s.destroy(); resolve({ ok: true }); });
-    s.on('error', (e) => { clearTimeout(t); resolve({ ok: false, error: e.code || e.message }); });
-  });
-}
+// --- Diagnostic email (Brevo) ---
 app.get('/api/diag', async (req, res) => {
-  const result = { transporter: !!transporter, tcp: {}, smtp: null, send: null };
-  // Test TCP : Gmail SMTP + hôtes témoins (pour distinguer blocage Gmail vs sortant global)
-  const hosts = [
-    ['smtp.gmail.com', 587], ['smtp.gmail.com', 465], ['smtp.gmail.com', 25], ['smtp.googlemail.com', 587],
-    ['google.com', 443], ['example.com', 80], ['smtp-relay.brevo.com', 587], ['smtp.sendgrid.net', 587],
-  ];
-  for (const [host, port] of hosts) {
-    result.tcp[`${host}:${port}`] = await testTcp(host, port);
+  const result = { brevo: { configured: emailConfigured, senders: null, send: null } };
+  if (!emailConfigured) return res.json(result);
+  try {
+    // Liste des senders pour vérifier que l'adresse d'expédition est bien validée
+    const r = await fetch('https://api.brevo.com/v3/senders', { headers: { 'api-key': BREVO_API_KEY } });
+    const data = await r.json();
+    result.brevo.senders = Array.isArray(data)
+      ? data.map((s) => ({ name: s.name, email: s.email, active: s.status === 'active' }))
+      : data;
+  } catch (e) {
+    result.brevo.senders = { error: e.message };
   }
-  if (!transporter) return res.json(result);
   try {
-    result.smtp = await Promise.race([
-      new Promise((resolve) => {
-        transporter.verify((err, success) => resolve(err ? { ok: false, error: err.message, code: err.code, response: err.response } : { ok: true }));
-      }),
-      new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: 'timeout verify 20s' }), 20000)),
-    ]);
-  } catch (e) { result.smtp = { ok: false, error: e.message }; }
-  try {
-    result.send = await Promise.race([
-      transporter.sendMail({
-        from: `"DocuFlow Diag" <${SMTP_USER}>`,
-        to: MAIL_TO,
-        subject: 'Diagnostic DocuFlow Landing',
-        html: '<p>Test diagnostic</p>',
-      }).then((info) => ({ ok: true, messageId: info.messageId })),
-      new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: 'timeout 20s' }), 20000)),
-    ]);
-  } catch (e) { result.send = { ok: false, error: e.message, code: e.code, response: e.response }; }
+    const sent = await sendEmail({
+      to: MAIL_TO,
+      subject: 'Diagnostic DocuFlow Landing (Brevo)',
+      html: '<p>Test de diagnostic envoyé via l\'API Brevo.</p>',
+    });
+    result.brevo.send = { ok: true, messageId: sent.messageId };
+  } catch (e) {
+    result.brevo.send = { ok: false, error: e.message };
+  }
   res.json(result);
 });
 
@@ -228,24 +219,21 @@ app.post('/api/submit', async (req, res) => {
     // 1. Write to Excel (rapide, synchrone pour garantir la persistance)
     await appendToExcel({ full_name, email, company, position, features, message });
 
-    // 2. Send emails en arrière-plan (fire-and-forget) pour ne pas dépasser
-    //    le timeout HTTP de Render. La réponse est immédiate, l'utilisateur
-    //    reçoit la confirmation sans attendre le SMTP.
-    if (transporter) {
+    // 2. Envoi des emails en arrière-plan (fire-and-forget) — la réponse HTTP
+    //    est immédiate, l'utilisateur est confirmé sans attendre le fournisseur.
+    if (emailConfigured) {
       (async () => {
         try {
-          // 2a. Notification au propriétaire (chabidaniel093@gmail.com)
-          await transporter.sendMail({
-            from: `"DocuFlow Démo" <${SMTP_USER}>`,
+          // 2a. Notification au propriétaire (MAIL_TO)
+          await sendEmail({
             to: MAIL_TO,
             subject: `[DocuFlow] Demande de test de ${full_name}`,
             html: buildEmailHtml({ full_name, email, company, position, features, message }),
           });
-          console.log(`[email] Notification envoyée à ${MAIL_TO} depuis ${full_name} <${email}>`);
+          console.log(`[email] Notification envoyée à ${MAIL_TO} — ${full_name} <${email}>`);
 
           // 2b. Confirmation automatique au demandeur
-          await transporter.sendMail({
-            from: `"DocuFlow AFGC" <${SMTP_USER}>`,
+          await sendEmail({
             to: email,
             subject: `✅ Demande de test DocuFlow bien reçue`,
             html: buildConfirmationHtml({ full_name, company, features }),
@@ -256,7 +244,7 @@ app.post('/api/submit', async (req, res) => {
         }
       })();
     } else {
-      console.log(`[email] SMTP non configuré — emails non envoyés pour ${full_name}`);
+      console.log(`[email] Brevo non configuré — emails non envoyés pour ${full_name}`);
     }
 
     res.status(201).json({ message: 'Votre demande a été envoyée avec succès ! Nous vous contacterons bientôt.' });
@@ -295,5 +283,5 @@ app.get('/api/requests', async (req, res) => {
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 DocuFlow Landing API on port ${PORT}`);
-  console.log(`📧 Email: ${transporter ? 'configuré' : 'non configuré (SMTP_PASS manquant)'}`);
+  console.log(`📧 Email: ${emailConfigured ? `Brevo configuré (sender ${BREVO_SENDER_EMAIL})` : 'non configuré (BREVO_API_KEY manquant)'}`);
 });
