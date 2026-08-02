@@ -31,6 +31,8 @@ const transporter = SMTP_PASS
       connectionTimeout: 15000,
       greetingTimeout: 15000,
       socketTimeout: 20000,
+      // Force IPv4 : Render free ne route pas l'IPv6 (ENETUNREACH sur smtp.gmail.com)
+      connectionOptions: { family: 4 },
       auth: { user: SMTP_USER, pass: SMTP_PASS },
     })
   : null;
