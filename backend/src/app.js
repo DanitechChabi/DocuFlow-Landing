@@ -171,8 +171,21 @@ function buildEmailHtml(data) {
 app.get('/', (req, res) => res.json({ status: 'ok', message: 'DocuFlow Landing API' }));
 
 // --- Diagnostic SMTP (temporaire, pour le débogage du déploiement) ---
+const net = require('net');
+function testTcp(host, port, ms = 8000) {
+  return new Promise((resolve) => {
+    const s = net.connect({ host, port, family: 4 });
+    const t = setTimeout(() => { s.destroy(); resolve({ ok: false, error: 'timeout' }); }, ms);
+    s.on('connect', () => { clearTimeout(t); s.destroy(); resolve({ ok: true }); });
+    s.on('error', (e) => { clearTimeout(t); resolve({ ok: false, error: e.code || e.message }); });
+  });
+}
 app.get('/api/diag', async (req, res) => {
-  const result = { transporter: !!transporter, smtp: null, send: null };
+  const result = { transporter: !!transporter, tcp: {}, smtp: null, send: null };
+  // Test TCP vers plusieurs hôtes/ports Gmail
+  for (const [host, port] of [['smtp.gmail.com', 587], ['smtp.gmail.com', 465], ['smtp.gmail.com', 25], ['smtp.googlemail.com', 587]]) {
+    result.tcp[`${host}:${port}`] = await testTcp(host, port);
+  }
   if (!transporter) return res.json(result);
   try {
     result.smtp = await Promise.race([
