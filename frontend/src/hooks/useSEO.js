@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 // URL canonique stable du site (sous-domaine Vercel gratuit).
-const BASE_URL = 'https://frontend-olive-phi-4u9t5e6law.vercel.app';
+const BASE_URL = 'https://getdocuflow.vercel.app';
 
 const DEFAULT = {
   title: 'DocuFlow — Plateforme de gestion documentaire | Test gratuit',
