@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: docuflow-landing-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: '587'
+      - key: SMTP_USER
+        value: chabidaniel093@gmail.com
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_TO
+        value: chabidaniel093@gmail.com
+      - key: DATA_DIR
+        value: /var/data
+    disk:
+      name: excel-storage
+      mountPath: /var/data
+      sizeGB: 1
