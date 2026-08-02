@@ -1,15 +1,20 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+
+// La page d'accueil est chargée immédiatement (LCP optimal pour la page d'atterrissage).
 import HomePage from './pages/HomePage'
-import DemoRequestPage from './pages/DemoRequestPage'
+// La page de demande de test est chargée à la demande (bundle initial allégé).
+const DemoRequestPage = lazy(() => import('./pages/DemoRequestPage'))
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/demander" element={<DemoRequestPage />} />
-      </Routes>
+      <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/demander" element={<DemoRequestPage />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

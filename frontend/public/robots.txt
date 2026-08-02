@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://frontend-olive-phi-4u9t5e6law.vercel.app/sitemap.xml

@@ -2,10 +2,105 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="DocuFlow — Plateforme de gestion documentaire. Créez, suivez et gérez vos demandes de documents." />
-    <title>DocuFlow — Gestion documentaire intelligente</title>
+
+    <!-- ====== SEO principal ====== -->
+    <title>DocuFlow — Plateforme de gestion documentaire | Test gratuit</title>
+    <meta name="description" content="DocuFlow, la plateforme de gestion documentaire pour entreprises : demandes de documents, suivi en temps réel, GED, messagerie et rôles. Sans carte bancaire, déployée en 5 minutes. Demandez un test gratuit." />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="ARCHICORP — CHABI BOUKO Daniel" />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="canonical" href="https://frontend-olive-phi-4u9t5e6law.vercel.app/" />
+
+    <!-- ====== Open Graph (Facebook, LinkedIn, WhatsApp…) ====== -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DocuFlow" />
+    <meta property="og:title" content="DocuFlow — Plateforme de gestion documentaire" />
+    <meta property="og:description" content="Demandes de documents, suivi en temps réel, GED et messagerie : centralisez toute votre gestion documentaire. Test gratuit, sans carte bancaire." />
+    <meta property="og:url" content="https://frontend-olive-phi-4u9t5e6law.vercel.app/" />
+    <meta property="og:image" content="https://frontend-olive-phi-4u9t5e6law.vercel.app/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="fr_FR" />
+
+    <!-- ====== Twitter ====== -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="DocuFlow — Plateforme de gestion documentaire" />
+    <meta name="twitter:description" content="Centralisez demandes de documents, suivi et GED. Test gratuit, sans carte bancaire." />
+    <meta name="twitter:image" content="https://frontend-olive-phi-4u9t5e6law.vercel.app/og-image.svg" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- ====== Données structurées ====== -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://frontend-olive-phi-4u9t5e6law.vercel.app/#org",
+          "name": "ARCHICORP",
+          "url": "https://frontend-olive-phi-4u9t5e6law.vercel.app/",
+          "founder": { "@type": "Person", "name": "CHABI BOUKO Daniel" }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://frontend-olive-phi-4u9t5e6law.vercel.app/#website",
+          "name": "DocuFlow",
+          "alternateName": "DocuFlow AFGC",
+          "description": "Plateforme de gestion documentaire : demandes de documents, suivi en temps réel, GED, messagerie et rôles pour entreprises.",
+          "url": "https://frontend-olive-phi-4u9t5e6law.vercel.app/",
+          "publisher": { "@id": "https://frontend-olive-phi-4u9t5e6law.vercel.app/#org" },
+          "inLanguage": "fr"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://frontend-olive-phi-4u9t5e6law.vercel.app/#app",
+          "name": "DocuFlow",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+          "aggregateRating": { "@type": "AggregateRating", "ratingValue": "5", "ratingCount": "1" }
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://frontend-olive-phi-4u9t5e6law.vercel.app/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Combien de temps faut-il pour déployer DocuFlow ?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Quelques minutes. Votre espace entreprise est créé, un superadministrateur est désigné, et l'onboarding guidé prend chaque collaborateur par la main." }
+            },
+            {
+              "@type": "Question",
+              "name": "Nos documents sont-ils vraiment isolés des autres entreprises ?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Oui. DocuFlow est multi-tenant : chaque entreprise dispose d'un espace strictement isolé (données, utilisateurs, référentiels, branding), renforcé par une isolation au niveau base de données." }
+            },
+            {
+              "@type": "Question",
+              "name": "Que contient le test gratuit ?",
+              "acceptedAnswer": { "@type": "Answer", "text": "L'accès complet à la plateforme : référentiel GED, demandes et workflow, messagerie temps réel, rôles, notifications et branding personnalisable. Sans carte bancaire, sans engagement." }
+            },
+            {
+              "@type": "Question",
+              "name": "Pouvons-nous suivre où en est chaque demande ?",
+              "acceptedAnswer": { "@type": "Answer", "text": "En permanence. Chaque demande traverse une machine à états claire — en attente, à traiter, transmis, livré — avec notification à chaque étape et historique complet des actions." }
+            },
+            {
+              "@type": "Question",
+              "name": "Qui peut voir et faire quoi ?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Tout dépend du rôle : le demandeur crée et suit ses demandes, l'archiviste traite et livre, l'administrateur configure et délègue, le superadministrateur pilote l'espace." }
+            },
+            {
+              "@type": "Question",
+              "name": "Une assistance est-elle prévue pour la mise en route ?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Oui. ARCHICORP accompagne le déploiement : configuration, import des référentiels, formation des archivistes. Votre demande de test est suivie personnellement par l'équipe." }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import useSEO from '../hooks/useSEO';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import StatsBar from '../components/StatsBar';
@@ -15,7 +16,15 @@ import FinalCta from '../components/FinalCta';
 import Footer from '../components/Footer';
 import BackToTop from '../components/BackToTop';
 
-const HomePage = () => (
+const HomePage = () => {
+  useSEO({
+    title: 'DocuFlow — Plateforme de gestion documentaire | Test gratuit',
+    description:
+      'DocuFlow, la plateforme de gestion documentaire pour entreprises : demandes de documents, suivi en temps réel, GED, messagerie et rôles. Sans carte bancaire, déployée en 5 minutes. Demandez un test gratuit.',
+    path: '/',
+  });
+
+  return (
   <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 relative">
     <Navbar />
     <main>
@@ -35,6 +44,7 @@ const HomePage = () => (
     <Footer />
     <BackToTop />
   </div>
-);
+  );
+};
 
 export default HomePage;

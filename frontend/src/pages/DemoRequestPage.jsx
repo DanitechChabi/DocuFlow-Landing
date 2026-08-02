@@ -4,6 +4,7 @@ import { ArrowLeft, Send, User, Mail, Building2, Briefcase, MessageSquare, Check
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import useSEO from '../hooks/useSEO';
 
 // Retire un éventuel "/api" final pour éviter "double /api" avec la concaténation ci-dessous
 const API_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:3002').replace(/\/api$/, '');
@@ -20,6 +21,13 @@ const FEATURES_LIST = [
 ];
 
 const DemoRequestPage = () => {
+  useSEO({
+    title: 'Demander un test gratuit — DocuFlow',
+    description:
+      'Demandez un accès de test gratuit à DocuFlow : référentiel GED, demandes et workflow, messagerie temps réel, rôles et notifications. Sans carte bancaire, sans engagement.',
+    path: '/demander',
+  });
+
   const [form, setForm] = useState({ full_name: '', email: '', company: '', position: '', features: [], message: '' });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
