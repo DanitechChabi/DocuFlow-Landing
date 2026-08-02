@@ -165,6 +165,26 @@ function buildEmailHtml(data) {
 // --- Routes ---
 app.get('/', (req, res) => res.json({ status: 'ok', message: 'DocuFlow Landing API' }));
 
+// --- Diagnostic SMTP (temporaire, pour le débogage du déploiement) ---
+app.get('/api/diag', async (req, res) => {
+  const result = { transporter: !!transporter, smtp: null, send: null };
+  if (!transporter) return res.json(result);
+  try {
+    result.smtp = await new Promise((resolve) => {
+      transporter.verify((err, success) => resolve(err ? { ok: false, error: err.message, code: err.code, response: err.response } : { ok: true }));
+    });
+  } catch (e) { result.smtp = { ok: false, error: e.message }; }
+  try {
+    result.send = await transporter.sendMail({
+      from: `"DocuFlow Diag" <${SMTP_USER}>`,
+      to: MAIL_TO,
+      subject: 'Diagnostic DocuFlow Landing',
+      html: '<p>Test diagnostic</p>',
+    }).then((info) => ({ ok: true, messageId: info.messageId }));
+  } catch (e) { result.send = { ok: false, error: e.message, code: e.code, response: e.response }; }
+  res.json(result);
+});
+
 app.post('/api/submit', async (req, res) => {
   const { full_name, email, company, position, features, message } = req.body;
 
