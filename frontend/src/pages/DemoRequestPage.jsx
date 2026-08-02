@@ -5,7 +5,8 @@ import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3002';
+// Retire un éventuel "/api" final pour éviter "double /api" avec la concaténation ci-dessous
+const API_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:3002').replace(/\/api$/, '');
 
 const FEATURES_LIST = [
   'Demandes documentaires',
