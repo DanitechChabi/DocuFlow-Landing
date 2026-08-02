@@ -21,12 +21,12 @@ docuflow-landing/
 5. Variables d'environnement :
    | Variable | Valeur |
    |---|---|
-   | `SMTP_HOST` | `smtp.gmail.com` |
-   | `SMTP_PORT` | `587` |
-   | `SMTP_USER` | `chabidaniel093@gmail.com` |
-   | `SMTP_PASS` | *(votre mot de passe d'application Gmail)* |
+   | `BREVO_API_KEY` | *(votre clé API Brevo `xkeysib-...`)* |
+   | `BREVO_SENDER_EMAIL` | `chabidaniel093@gmail.com` (déclaré/vérifié dans Brevo) |
+   | `BREVO_SENDER_NAME` | `DocuFlow AFGC` |
    | `MAIL_TO` | `chabidaniel093@gmail.com` |
    | `DATA_DIR` | `/var/data` |
+   > ⚠️ Render free bloque le SMTP sortant (587/465/25) → les emails passent par l'**API HTTP Brevo** (port 443). N'utilisez plus `SMTP_*`.
 6. Ajoutez un **disk** : mountPath `/var/data`, 1 Go (persistance Excel)
 
 ### 2. Frontend (Vercel)
@@ -43,7 +43,7 @@ docuflow-landing/
 ```bash
 # Backend (port 3002)
 cd docuflow-landing/backend
-cp .env.example .env  # configurez SMTP_PASS
+cp .env.example .env  # configurez BREVO_API_KEY
 npm install
 npm run dev
 
