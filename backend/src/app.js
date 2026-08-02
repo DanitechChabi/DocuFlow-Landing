@@ -28,6 +28,9 @@ const transporter = SMTP_PASS
       port: SMTP_PORT,
       secure: false,
       requireTLS: true,
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 20000,
       auth: { user: SMTP_USER, pass: SMTP_PASS },
     })
   : null;
@@ -170,17 +173,23 @@ app.get('/api/diag', async (req, res) => {
   const result = { transporter: !!transporter, smtp: null, send: null };
   if (!transporter) return res.json(result);
   try {
-    result.smtp = await new Promise((resolve) => {
-      transporter.verify((err, success) => resolve(err ? { ok: false, error: err.message, code: err.code, response: err.response } : { ok: true }));
-    });
+    result.smtp = await Promise.race([
+      new Promise((resolve) => {
+        transporter.verify((err, success) => resolve(err ? { ok: false, error: err.message, code: err.code, response: err.response } : { ok: true }));
+      }),
+      new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: 'timeout verify 20s' }), 20000)),
+    ]);
   } catch (e) { result.smtp = { ok: false, error: e.message }; }
   try {
-    result.send = await transporter.sendMail({
-      from: `"DocuFlow Diag" <${SMTP_USER}>`,
-      to: MAIL_TO,
-      subject: 'Diagnostic DocuFlow Landing',
-      html: '<p>Test diagnostic</p>',
-    }).then((info) => ({ ok: true, messageId: info.messageId }));
+    result.send = await Promise.race([
+      transporter.sendMail({
+        from: `"DocuFlow Diag" <${SMTP_USER}>`,
+        to: MAIL_TO,
+        subject: 'Diagnostic DocuFlow Landing',
+        html: '<p>Test diagnostic</p>',
+      }).then((info) => ({ ok: true, messageId: info.messageId })),
+      new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: 'timeout 20s' }), 20000)),
+    ]);
   } catch (e) { result.send = { ok: false, error: e.message, code: e.code, response: e.response }; }
   res.json(result);
 });
