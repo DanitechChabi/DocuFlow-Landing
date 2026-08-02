@@ -177,28 +177,36 @@ app.post('/api/submit', async (req, res) => {
   }
 
   try {
-    // 1. Write to Excel
+    // 1. Write to Excel (rapide, synchrone pour garantir la persistance)
     await appendToExcel({ full_name, email, company, position, features, message });
 
-    // 2. Send emails
+    // 2. Send emails en arrière-plan (fire-and-forget) pour ne pas dépasser
+    //    le timeout HTTP de Render. La réponse est immédiate, l'utilisateur
+    //    reçoit la confirmation sans attendre le SMTP.
     if (transporter) {
-      // 2a. Notification au propriétaire (chabidaniel093@gmail.com)
-      await transporter.sendMail({
-        from: `"DocuFlow Démo" <${SMTP_USER}>`,
-        to: MAIL_TO,
-        subject: `[DocuFlow] Demande de test de ${full_name}`,
-        html: buildEmailHtml({ full_name, email, company, position, features, message }),
-      });
-      console.log(`[email] Notification envoyée à ${MAIL_TO} depuis ${full_name} <${email}>`);
+      (async () => {
+        try {
+          // 2a. Notification au propriétaire (chabidaniel093@gmail.com)
+          await transporter.sendMail({
+            from: `"DocuFlow Démo" <${SMTP_USER}>`,
+            to: MAIL_TO,
+            subject: `[DocuFlow] Demande de test de ${full_name}`,
+            html: buildEmailHtml({ full_name, email, company, position, features, message }),
+          });
+          console.log(`[email] Notification envoyée à ${MAIL_TO} depuis ${full_name} <${email}>`);
 
-      // 2b. Confirmation automatique au demandeur
-      await transporter.sendMail({
-        from: `"DocuFlow AFGC" <${SMTP_USER}>`,
-        to: email,
-        subject: `✅ Demande de test DocuFlow bien reçue`,
-        html: buildConfirmationHtml({ full_name, company, features }),
-      });
-      console.log(`[email] Confirmation envoyée au demandeur ${email}`);
+          // 2b. Confirmation automatique au demandeur
+          await transporter.sendMail({
+            from: `"DocuFlow AFGC" <${SMTP_USER}>`,
+            to: email,
+            subject: `✅ Demande de test DocuFlow bien reçue`,
+            html: buildConfirmationHtml({ full_name, company, features }),
+          });
+          console.log(`[email] Confirmation envoyée au demandeur ${email}`);
+        } catch (mailErr) {
+          console.error('[email] Erreur d\'envoi:', mailErr.message);
+        }
+      })();
     } else {
       console.log(`[email] SMTP non configuré — emails non envoyés pour ${full_name}`);
     }
