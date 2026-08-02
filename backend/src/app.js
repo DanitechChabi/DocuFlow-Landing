@@ -33,10 +33,22 @@ const transporter = SMTP_PASS
   : null;
 
 // --- Config Excel ---
-// Sur Render, DATA_DIR pointe vers le disque persistant (render.yaml → /var/data)
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../data');
+// Sur Render, DATA_DIR pointe vers le disque persistant (render.yaml → /var/data).
+// Si le disque n'est pas monté (conteneur non-root sans permission sur /var/data),
+// on retombe sur un dossier local pour que l'API démarre quand même.
+let DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../data');
+try {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  // Test d'écriture réel (le disque peut exister mais être non-writable)
+  const probe = path.join(DATA_DIR, '.write-test');
+  fs.writeFileSync(probe, 'ok');
+  fs.unlinkSync(probe);
+} catch (e) {
+  console.warn(`[excel] DATA_DIR "${DATA_DIR}" non accessible (${e.code}) — fallback local`);
+  DATA_DIR = path.join(__dirname, '../data');
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 const EXCEL_FILE = path.join(DATA_DIR, 'demandes.xlsx');
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 const EXCEL_HEADERS = ['Date', 'Nom complet', 'Email', 'Entreprise', 'Poste', 'Fonctionnalités', 'Message'];
 
